@@ -5,17 +5,22 @@ Author:				Laurent BOST URBAN
 Creation Date:		2026-10-23 13:32:25
 Email:				bostur_l@etna-alternance.net
 Description:		Python file.
-Last update Date:	2026-10-23 15:07:35 by bostur_l
+Last update Date:	2026-10-23 16:17:41 by bostur_l
 """
 
 __author__ = "bostur_l"
 
+import datetime
 import random
 import html
 import json
 
 score = 0
 
+print("BEGIN: _~QUIZIFY~_")
+name = input("Please enter your name\n (no name is 'anonymous')\n:")
+if name == "":
+    name = "anonymous"
 print("sTaRtInG QUIZZZZZzzzzzzzz...:")
 question_list = None
 with open("./data/questions.json") as f:
@@ -61,6 +66,41 @@ for question_answer in question_list:
         else:
             print(f"\n_WRONG_: the answer was '{correct_answer}'!")
 print("-----------------------------------------------------------")
-print("Quizz finished.")
-print(f"Your score is {score}/{quest_numb}.")
-print(" Bye o/")
+print("Quizz finished.\n")
+percent_score = float(f"{score * 100 / quest_numb:.2f}")
+print(f"{name}:\n\
+Your score is {score}/{quest_numb}\n (percent={percent_score}).")
+user_data_dict_str: str
+user_data_dict: dict
+with open("./data/utilisateurs.json") as fr:
+    user_data_dict_str = fr.read()
+if len(user_data_dict_str) == 0:
+    user_data_dict = {
+        f"{name}":
+        {
+            "scores":
+            [{"score%": percent_score, "date":
+              datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}]
+        }
+    }
+else:
+    user_data_dict = json.loads(user_data_dict_str)
+    user_data_scores = user_data_dict.get(name, None)
+    if user_data_scores is None:
+        user_data_scores = {
+            "scores":
+            [{"score%": percent_score, "date":
+              datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}]
+        }
+        user_data_dict[name] = user_data_scores
+    else:
+        user_data_score = user_data_dict[name]
+        user_data_score["scores"].append({
+            "score%": percent_score, "date":
+            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
+user_data_dict_str = json.dumps(user_data_dict)
+with open("./data/utilisateurs.json", "w") as fw:
+    fw.write(user_data_dict_str)
+print("-- \nBye o/")
+print("_END_: _~QUIZIFY~_")
