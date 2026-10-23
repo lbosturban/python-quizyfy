@@ -5,7 +5,7 @@ Author:				Laurent BOST URBAN
 Creation Date:		2026-10-23 13:32:25
 Email:				bostur_l@etna-alternance.net
 Description:		Python file.
-Last update Date:	2026-10-23 20:56:23 by bostur_l
+Last update Date:	2026-10-23 20:58:33 by bostur_l
 """
 
 __author__ = "bostur_l"
@@ -27,10 +27,12 @@ class Difficulty(Enum):
     MEDIUM = 2
     HARD = 3
 
+
 class Qtype(Enum):
     ANY = 0
     MULTIPLE = 1
     BOOLEAN = 2
+
 
 class Game:
     def __init__(self):
@@ -159,8 +161,8 @@ amount={nb}{cat}{diff}{qtype}"
         config: dict
         with open("./data/opentdb.json") as cr:
             config = json.load(cr)
-        command = -1
-        while command > 0:
+        command = 0
+        while command >= 0:
             Game.clear()
             self.print_header()
             print("0. No Change")
