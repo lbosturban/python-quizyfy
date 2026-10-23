@@ -5,7 +5,7 @@ Author:				Laurent BOST URBAN
 Creation Date:		2026-10-23 13:32:25
 Email:				bostur_l@etna-alternance.net
 Description:		Python file.
-Last update Date:	2026-10-23 20:58:33 by bostur_l
+Last update Date:	2026-10-23 21:23:15 by bostur_l
 """
 
 __author__ = "bostur_l"
@@ -19,6 +19,8 @@ import requests
 from enum import Enum
 from subprocess import call
 from sys import platform
+
+categories: dict = None
 
 
 class Difficulty(Enum):
@@ -114,22 +116,27 @@ Your score is {self.score}/{self.quest_numb}\n \
             self.manage_score()
 
     def request_trivia_json(cfg_dict: dict, req_type: int) -> dict:
+        global categories
         match req_type:
             case 1:
-                url = "https://opentdb.com/api_category.php"
-                r = requests.get(url)
-                cat = json.loads(r.content)
+                cat: dict
+                if categories is None:
+                    url = "https://opentdb.com/api_category.php"
+                    r = requests.get(url)
+                    categories = json.loads(r.content)
+                cat = categories
                 cat_choice_list = list(enumerate(cat["trivia_categories"]))
-                cat_choice_text: str = "Choice:\n0. Any Category\n"
+                cat_choice_text: str = "\nChoice:\n0. Any Category\n"
                 for cat_choice in cat_choice_list:
-                    num = cat_choice[0] + 2
+                    num = cat_choice[0] + 1
                     obj = cat_choice[1]
                     name = obj.get('name')
                     cat_choice_text += f"{num}. {name}\n"
-                f"{cat_choice_text}\n \
+                cat_choice_text = f"{cat_choice_text}\n\
  (type the number, 1 or 2 or 3 ...,  of the answer chosen, then Enter)\n: "
                 cat_user_choice = input(cat_choice_text)
-                selected_cat = cat_choice_list[int(cat_user_choice) - 1][1]
+                selected_cat =\
+                    cat_choice_list[int(cat_user_choice) - 1][1]
                 if selected_cat == "0":
                     cfg_dict['cat'] = ""
                 else:
@@ -199,12 +206,14 @@ amount={nb}{cat}{diff}{qtype}"
                     config["quest"] = int(nb)
                 case "6":
                     print(config)
+                    input("Type Enter for you to enter your next choice:\n")
                 case "8":
                     resp_questions = Game.request_trivia_json(config, 2)
                     if resp_questions is not None:
                         questions_str = json.dumps(resp_questions["result"])
                         with open("./data/questions.json", "w") as qw:
                             qw.write(questions_str)
+            command = int(command)
 
     def start(self):
         Game.clear()
