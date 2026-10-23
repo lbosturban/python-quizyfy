@@ -5,7 +5,7 @@ Author:				Laurent BOST URBAN
 Creation Date:		2026-10-23 13:32:25
 Email:				bostur_l@etna-alternance.net
 Description:		Python file.
-Last update Date:	2026-10-23 15:00:31 by bostur_l
+Last update Date:	2026-10-23 15:07:35 by bostur_l
 """
 
 __author__ = "bostur_l"
@@ -14,21 +14,24 @@ import random
 import html
 import json
 
+score = 0
+
 print("sTaRtInG QUIZZZZZzzzzzzzz...:")
 question_list = None
 with open("./data/questions.json") as f:
     question_list = json.load(f)
+quest_numb = len(question_list)
 for question_answer in question_list:
     print("-----------------------------------------------------------")
-    category = question_answer['category']
+    category = html.unescape(question_answer['category'])
     print(f"Category: \"{category}\"")
     difficulty = question_answer['difficulty']
-    print(f"Difficulty: \"{difficulty}\"")
+    print(f"Difficulty: _{difficulty}_")
     is_quest_bool = question_answer["type"] == "boolean"
     type_question = "[T]rue/[F]alse" if is_quest_bool else "Multiple Choice"
     print(f"Type: {type_question}")
     question = html.unescape(question_answer['question'])
-    print(f"Question: \"{question}\"\n")
+    print(f"Question:\n - \"{question}\"\n")
     answer_list = question_answer['incorrect_answers']
     correct_answer = question_answer['correct_answer']
     answer_list.insert(0, correct_answer)
@@ -48,12 +51,16 @@ for question_answer in question_list:
     if is_quest_bool:
         if correct_answer.lower().startswith(user_answer.lower()):
             print(f"\nCORRECT: the answer is '{correct_answer}'!")
+            score += 1
         else:
             print(f"\n_WRONG_: the answer was '{correct_answer}'!")
     else:
-        if correct_answer == answer_list[int(user_answer) - 1]:
+        if correct_answer == answer_values[int(user_answer) - 1]:
             print(f"\nCORRECT: the answer is '{correct_answer}'!")
+            score += 1
         else:
             print(f"\n_WRONG_: the answer was '{correct_answer}'!")
 print("-----------------------------------------------------------")
-print("Quizz finished.\n Bye o/")
+print("Quizz finished.")
+print(f"Your score is {score}/{quest_numb}.")
+print(" Bye o/")
