@@ -5,7 +5,7 @@ Author:				Laurent BOST URBAN
 Creation Date:		2026-10-23 13:32:25
 Email:				bostur_l@etna-alternance.net
 Description:		Python file.
-Last update Date:	2026-10-23 18:37:21 by bostur_l
+Last update Date:	2026-10-23 20:56:23 by bostur_l
 """
 
 __author__ = "bostur_l"
@@ -14,10 +14,23 @@ import datetime
 import random
 import html
 import json
+import requests
 
+from enum import Enum
 from subprocess import call
 from sys import platform
 
+
+class Difficulty(Enum):
+    ANY = 0
+    EASY = 1
+    MEDIUM = 2
+    HARD = 3
+
+class Qtype(Enum):
+    ANY = 0
+    MULTIPLE = 1
+    BOOLEAN = 2
 
 class Game:
     def __init__(self):
@@ -32,6 +45,10 @@ class Game:
         else:
             command = 'cls'
         call(command, shell=True)
+
+    def print_header(self):
+        print("_____---------'   MENU   '---------_____\n")
+        print(f"\tWelcome '{self.name}'\n")
 
     def play(self):
         print("BEGIN: _~QUIZIFY~_")
@@ -94,6 +111,99 @@ Your score is {self.score}/{self.quest_numb}\n \
 (percent={self.percent_score}).")
             self.manage_score()
 
+    def request_trivia_json(cfg_dict: dict, req_type: int) -> dict:
+        match req_type:
+            case 1:
+                url = "https://opentdb.com/api_category.php"
+                r = requests.get(url)
+                cat = json.loads(r.content)
+                cat_choice_list = list(enumerate(cat["trivia_categories"]))
+                cat_choice_text: str = "Choice:\n0. Any Category\n"
+                for cat_choice in cat_choice_list:
+                    num = cat_choice[0] + 2
+                    obj = cat_choice[1]
+                    name = obj.get('name')
+                    cat_choice_text += f"{num}. {name}\n"
+                f"{cat_choice_text}\n \
+ (type the number, 1 or 2 or 3 ...,  of the answer chosen, then Enter)\n: "
+                cat_user_choice = input(cat_choice_text)
+                selected_cat = cat_choice_list[int(cat_user_choice) - 1][1]
+                if selected_cat == "0":
+                    cfg_dict['cat'] = ""
+                else:
+                    id_cat = selected_cat.get('id')
+                    cfg_dict['cat'] = str(id_cat)
+                return cfg_dict
+            case 2:
+                nb = cfg_dict['quest']
+                cat = cfg_dict['cat']
+                if cat != "":
+                    cat = f"&category={cat}"
+                diff = cfg_dict['diff']
+                if diff != "":
+                    diff = f"&difficulty={diff}"
+                qtype = cfg_dict['type']
+                if qtype != "":
+                    qtype = f"&type={qtype}"
+                url = f"https://opentdb.com/api.php?\
+amount={nb}{cat}{diff}{qtype}"
+                r = requests.get(url)
+                resp = json.loads(r.content)
+                if resp["response_code"] != 0:
+                    print("ERROR: config")
+                    return None
+                else:
+                    return resp
+
+    def config(self):
+        config: dict
+        with open("./data/opentdb.json") as cr:
+            config = json.load(cr)
+        command = -1
+        while command > 0:
+            Game.clear()
+            self.print_header()
+            print("0. No Change")
+            print("1. Select Category")
+            print("2. Select Difficulty")
+            print("3. Select Type")
+            print("4. Choose Number of questions")
+            print("6. Display current config")
+            print("8. Load Trivia with current config\n\n")
+            command = input(" (press 1 or 2 or ... then Enter)\n: ")
+            match command:
+                case "0":
+                    break
+                case "1":
+                    config = Game.request_trivia_json(config, 1)
+                case "2":
+                    diff = input("Choice:\n\
+0. Any Difficulty\n1. Easy\n2. Medium\n3. Hard\n \
+ (type the number, 0 or 1 or 2 ...,  of the answer chosen, then Enter)\n: ")
+                    if diff == "0":
+                        config["diff"] = ""
+                    else:
+                        config["diff"] = Difficulty(int(diff)).name.lower()
+                case "3":
+                    qtype = input("Choice:\n\
+0. Any Type\n1. Multiple Choice\n2. [T]rue/[F]alse\n \
+ (type the number, 0 or 1 or 2,  of the answer chosen, then Enter)\n: ")
+                    if qtype == "0":
+                        config['type'] = ""
+                    else:
+                        config['type'] = Qtype(int(qtype)).name.lower()
+                case "4":
+                    nb = input("type a number beetwen 10 and 50, then Enter")
+                    config["quest"] = int(nb)
+                case "6":
+                    print(config)
+                case "8":
+                    resp_questions = Game.request_trivia_json(config, 2)
+                    if resp_questions is not None:
+                        questions_str = json.dumps(resp_questions["result"])
+                        with open("./data/questions.json", "w") as qw:
+                            qw.write(questions_str)
+
     def start(self):
         Game.clear()
         print("BEGIN: _~QUIZIFY~_")
@@ -101,20 +211,23 @@ Your score is {self.score}/{self.quest_numb}\n \
         if name != "":
             self.name = name
         command = 0
-        while command != "3":
-            print("_____---------'   MENU   '---------_____\n")
-            print(f"\tWelcome '{self.name}'\n")
+        while command != "4":
+            self.print_header()
             print("1. Play")
             print("2. High Scores")
-            print("3. Quit\n\n")
+            print("3. Configure Quizz")
+            print("4. Quit\n\n")
             command = input(" (press 1 or 2 or 3 then Enter)\n: ")
-            if command == "1":
-                Game.clear()
-                self.play()
-            elif command == "2":
-                print("High Scores")
-            elif command == "3":
-                break
+            match command:
+                case "1":
+                    Game.clear()
+                    self.play()
+                case "2":
+                    print("High Scores")
+                case "3":
+                    self.config()
+                case "4":
+                    break
             input("Press enter to return to the Menu.\n")
             Game.clear()
             print("BEGIN: _~QUIZIFY~_")
@@ -159,5 +272,8 @@ Your score is {self.score}/{self.quest_numb}\n \
                 fw.write(user_data_dict_str)
 
 
-game = Game()
-game.start()
+try:
+    game = Game()
+    game.start()
+except Exception as error:
+    print(error)
