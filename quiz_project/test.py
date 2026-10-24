@@ -5,7 +5,7 @@ Author:				Laurent BOST URBAN
 Creation Date:		2026-10-23 13:32:25
 Email:				bostur_l@etna-alternance.net
 Description:		Python file.
-Last update Date:	2026-10-24 11:30:03 by bostur_l
+Last update Date:	2026-10-24 12:19:58 by bostur_l
 """
 
 __author__ = "bostur_l"
@@ -65,7 +65,8 @@ class Game:
             question_list = json.load(f)
         self.quest_numb = len(question_list)
         for question_answer in question_list:
-            print("\n--------------------------------------------------")
+            print("-----------------------------------------\
+--------------------")
             category = html.unescape(question_answer['category'])
             print(f"Category: \"{category}\"")
             difficulty = question_answer['difficulty']
@@ -98,21 +99,21 @@ class Game:
             user_answer = input(answer_choice)
             if is_quest_bool:
                 if correct_answer.lower().startswith(user_answer.lower()):
-                    print(f"|\nCORRECT:\n\
+                    print(f"\n|\nCORRECT:\n\
 the answer is '{correct_answer}'!\n|\n")
                     self.score += 1
                 else:
-                    print(f"|\n_WRONG_:\n\
+                    print(f"\n|\n_WRONG_:\n\
 the answer was '{correct_answer}'!\n|\n")
             else:
                 if correct_answer == answer_values[int(user_answer) - 1]:
-                    print(f"|\nCORRECT:\n\
+                    print(f"\n|\nCORRECT:\n\
 the answer is '{correct_answer}'!\n|\n")
                     self.score += 1
                 else:
-                    print(f"|\n_WRONG_:\n\
+                    print(f"\n|\n_WRONG_:\n\
 the answer was '{correct_answer}'!\n|\n")
-        print("\n--------------------------------------------------")
+        print("------------------------------------------------------------")
         print("Quizz finished.\n")
         self.percent_score =\
             float(f"{self.score * 100 / self.quest_numb:.2f}")
@@ -331,8 +332,8 @@ Category:\t\t{cat_name}\nDifficulty:\t\t{diff_name}\nType:\t\t\t{qtype_name}"
                 fw.write(user_data_dict_str)
 
 
-# try:
-game = Game()
-game.start()
-# except Exception as error:
-#    print(error)
+try:
+    game = Game()
+    game.start()
+except Exception as error:
+    print(error)
