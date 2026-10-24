@@ -5,7 +5,7 @@ Author:				Laurent BOST URBAN
 Creation Date:		2026-10-23 11:45:59
 Email:				bostur_l@etna-alternance.net
 Description:		quizify quizz
-Last update Date:	2026-10-24 12:28:32 by bostur_l
+Last update Date:	2026-10-24 12:44:29 by bostur_l
 """
 
 __author__ = "bostur_l"
@@ -20,7 +20,9 @@ import requests
 
 
 class Game(utils.Config):
+    """ main game class for the quizz """
     def __init__(self):
+        """ game ctor """
         super().__init__()
         self.name = "anonymous"
         self.score = 0
@@ -31,11 +33,14 @@ class Game(utils.Config):
         with open(self.open_trivia_conf_path) as cr:
             self.cfg = json.load(cr)
 
+    # TODO: more sub method to simplify code """
     def print_header(self, menu_type: str):
+        """ just prints the header """
         print(f"_____---------'   {menu_type} MENU   '---------_____\n")
         print(f"\tWelcome '{self.name}'\n")
 
     def play(self):
+        """ main game loop with questions """
         print("BEGIN: _~QUIZIFY~_")
         print("sTaRtInG QUIZZZZZzzzzzzzz...:")
         self.score = 0
@@ -101,7 +106,9 @@ Your score is {self.score}/{self.quest_numb}\n \
 (percent={self.percent_score}).")
         self.manage_score()
 
+    # TODO: manage HTTP errors and erroneous responses
     def request_trivia_json(self, req_type: int):
+        """ manages requests and reponse """
         match req_type:
             case 0:
                 if self.categories is None:
@@ -158,6 +165,7 @@ amount={nb}{cat}{diff}{qtype}"
         return None
 
     def get_category_name(self) -> str:
+        """ quick method to translate cat number into name """
         cat_name = "All Categories"
         cat_val = self.cfg.get('cat', None)
         if cat_val is None or cat_val == "":
@@ -173,9 +181,9 @@ amount={nb}{cat}{diff}{qtype}"
                             return cat_name
 
     def config(self):
+        """ manage opendb configuration for download auestions """
         command = 0
         while command >= 0:
-            print(f"loop starts with command = {command}")
             utils.game_clear()
             print("BEGIN: _~QUIZIFY~_")
             self.print_header("CONFIG")
@@ -247,6 +255,7 @@ Category:\t\t{cat_name}\nDifficulty:\t\t{diff_name}\nType:\t\t\t{qtype_name}"
             command = int(command)
 
     def start(self):
+        """ launch the game """
         utils.game_clear()
         print("BEGIN: _~QUIZIFY~_")
         name = input("Please enter your name\n (no name is 'anonymous')\n:")
@@ -266,6 +275,10 @@ Category:\t\t{cat_name}\nDifficulty:\t\t{diff_name}\nType:\t\t\t{qtype_name}"
                     self.play()
                 case "2":
                     print("High Scores")
+                    scoreboard = None
+                    with open(self.user_file_path) as ur:
+                        scoreboard = json.load(ur)
+                    print(scoreboard)
                 case "3":
                     self.config()
                 case "4":
@@ -277,6 +290,7 @@ Category:\t\t{cat_name}\nDifficulty:\t\t{diff_name}\nType:\t\t\t{qtype_name}"
         print("_END_: _~QUIZIFY~_")
 
     def manage_score(self):
+        """ manage user score and saves it """
         category_score = self.get_category_name()
         cat_num = self.cfg['cat']
         if cat_num == "":
@@ -284,5 +298,6 @@ Category:\t\t{cat_name}\nDifficulty:\t\t{diff_name}\nType:\t\t\t{qtype_name}"
         else:
             cat_num = int(cat_num)
         category_score = f"{category_score} ({cat_num})"
-        usr = user.User(self.name, category_score, self.score, self.quest_numb)
+        usr = user.User(self.name, category_score,
+                        self.score, self.quest_numb)
         usr.update_score()

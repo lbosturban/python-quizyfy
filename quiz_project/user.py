@@ -5,7 +5,7 @@ Author:				Laurent BOST URBAN
 Creation Date:		2026-10-23 11:46:06
 Email:				bostur_l@etna-alternance.net
 Description:		quizify user
-Last update Date:	2026-10-24 12:17:40 by bostur_l
+Last update Date:	2026-10-24 12:36:13 by bostur_l
 """
 
 __author__ = "bostur_l"
@@ -17,7 +17,9 @@ import datetime
 
 
 class User(utils.Config):
+    """ class to manage user to save score and for scoreboard """
     def __init__(self, name: str, category: str, score: int, quest_numb: int):
+        """ User ctor """
         super().__init__()
         self.name = name
         self.category = category
@@ -26,6 +28,7 @@ class User(utils.Config):
         self.percent_score = self.score / self.quest_numb
 
     def update_score(self):
+        """ update score and save in file """
         user_data_dict_str: str
         user_data_dict: dict
         with open(self.user_file_path) as fr:
