@@ -5,7 +5,7 @@ Author:				Laurent BOST URBAN
 Creation Date:		2026-10-23 11:45:59
 Email:				bostur_l@etna-alternance.net
 Description:		quizify quizz
-Last update Date:	2026-10-24 12:18:11 by bostur_l
+Last update Date:	2026-10-24 12:28:32 by bostur_l
 """
 
 __author__ = "bostur_l"
@@ -44,7 +44,8 @@ class Game(utils.Config):
             question_list = json.load(f)
         self.quest_numb = len(question_list)
         for question_answer in question_list:
-            print("\n--------------------------------------------------")
+            print("-----------------------------------------\
+-------------------")
             category = html.unescape(question_answer['category'])
             print(f"Category: \"{category}\"")
             difficulty = question_answer['difficulty']
@@ -77,28 +78,28 @@ class Game(utils.Config):
             user_answer = input(answer_choice)
             if is_quest_bool:
                 if correct_answer.lower().startswith(user_answer.lower()):
-                    print(f"|\nCORRECT:\n\
+                    print(f"\n|\nCORRECT:\n\
 the answer is '{correct_answer}'!\n|\n")
                     self.score += 1
                 else:
-                    print(f"|\n_WRONG_:\n\
+                    print(f"\n|\n_WRONG_:\n\
 the answer was '{correct_answer}'!\n|\n")
             else:
                 if correct_answer == answer_values[int(user_answer) - 1]:
-                    print(f"|\nCORRECT:\n\
+                    print(f"\n|\nCORRECT:\n\
 the answer is '{correct_answer}'!\n|\n")
                     self.score += 1
                 else:
-                    print(f"|\n_WRONG_:\n\
+                    print(f"\n|\n_WRONG_:\n\
 the answer was '{correct_answer}'!\n|\n")
-        print("\n--------------------------------------------------")
+        print("------------------------------------------------------------")
         print("Quizz finished.\n")
         self.percent_score =\
             float(f"{self.score * 100 / self.quest_numb:.2f}")
         print(f"{self.name}:\n\
 Your score is {self.score}/{self.quest_numb}\n \
 (percent={self.percent_score}).")
-        self.manage_score(self.cfg['cat'])
+        self.manage_score()
 
     def request_trivia_json(self, req_type: int):
         match req_type:
@@ -156,7 +157,7 @@ amount={nb}{cat}{diff}{qtype}"
                 return None
         return None
 
-    def get_category_name() -> str:
+    def get_category_name(self) -> str:
         cat_name = "All Categories"
         cat_val = self.cfg.get('cat', None)
         if cat_val is None or cat_val == "":
@@ -171,7 +172,6 @@ amount={nb}{cat}{diff}{qtype}"
                             cat_name = cat_obj['name']
                             return cat_name
 
-    
     def config(self):
         command = 0
         while command >= 0:
