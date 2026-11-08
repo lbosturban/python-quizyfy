@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-File:				utils.py
-Author:				Laurent BOST URBAN
+File:			utils.py
+Author:			Laurent BOST URBAN
 Creation Date:		2026-10-23 11:46:11
-Email:				bostur_l@etna-alternance.net
+Email:			bostur_l@etna-alternance.net
 Description:		quizify utils
 Last update Date:	2026-10-24 12:35:02 by bostur_l
 """
@@ -24,6 +24,7 @@ class Config:
         self.open_trivia_conf_path = "./data/opentdb.json"
         self.curr_quest_set_path = "./data/questions.json"
         self.default_categories_path = "./data/categories.json"
+        self.user_score_board = "./data/scoreboard.csv"
 
 
 class Difficulty(Enum):

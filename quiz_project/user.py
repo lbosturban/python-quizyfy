@@ -25,7 +25,7 @@ class User(utils.Config):
         self.category = category
         self.score = score
         self.quest_numb = quest_numb
-        self.percent_score = self.score / self.quest_numb
+        self.percent_score = (self.score / self.quest_numb) * 100
 
     def update_score(self):
         """ update score and save in file """
@@ -33,11 +33,13 @@ class User(utils.Config):
         user_data_dict: dict
         with open(self.user_file_path) as fr:
             user_data_dict_str = fr.read()
+        print(f"file {self.user_file_path} opened and read, {len(user_data_dict_str)} charater read.")
         if len(user_data_dict_str) == 0:
             user_data_dict = {
                 f"{self.name}": {
                     "scores":
                     [{"category": self.category,
+                      "#quest": self.quest_numb,
                       "score": f"{self.score}/{self.quest_numb}",
                       "score%": self.percent_score, "date":
                       datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}]
@@ -50,6 +52,7 @@ class User(utils.Config):
                 user_data_scores = {
                     "scores":
                     [{"category": self.category,
+                      "#quest":	self.quest_numb,
                       "score": f"{self.score}/{self.quest_numb}",
                       "score%": self.percent_score, "date":
                       datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}]
@@ -59,10 +62,12 @@ class User(utils.Config):
                 user_data_score = user_data_dict[self.name]
                 user_data_score["scores"].append({
                     "category": self.category,
+                    "#quest":	self.quest_numb,
                     "score": f"{self.score}/{self.quest_numb}",
                     "score%": self.percent_score, "date":
                     datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 })
-            user_data_dict_str = json.dumps(user_data_dict)
-            with open(self.user_file_path, "w") as fw:
-                fw.write(user_data_dict_str)
+        print("user data: '", user_data_dict, "'")
+        user_data_dict_str = json.dumps(user_data_dict)
+        with open(self.user_file_path, "w") as fw:
+            fw.write(user_data_dict_str)
