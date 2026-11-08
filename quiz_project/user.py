@@ -33,7 +33,6 @@ class User(utils.Config):
         user_data_dict: dict
         with open(self.user_file_path) as fr:
             user_data_dict_str = fr.read()
-        print(f"file {self.user_file_path} opened and read, {len(user_data_dict_str)} charater read.")
         if len(user_data_dict_str) == 0:
             user_data_dict = {
                 f"{self.name}": {
@@ -67,7 +66,6 @@ class User(utils.Config):
                     "score%": self.percent_score, "date":
                     datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 })
-        print("user data: '", user_data_dict, "'")
         user_data_dict_str = json.dumps(user_data_dict)
         with open(self.user_file_path, "w") as fw:
             fw.write(user_data_dict_str)

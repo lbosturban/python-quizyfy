@@ -13,7 +13,7 @@ __author__ = "bostur_l"
 
 import utils
 import user
-
+import csv
 import random
 import html
 import json
@@ -358,27 +358,22 @@ Category:\t\t{cat_name}\nDifficulty:\t\t{diff_name}\nType:\t\t\t{qtype_name}"
             self.print_header("MAIN")
             print("1. Play")
             print("2. High Scores")
-            print("3. Configure Quizz")
-            print("4. Quit\n\n")
+            print("3. Hall of Fame")
+            print("4. Configure Quizz")
+            print("5. Quit\n\n")
             command_txt = " (press 1 or 2 or 3 ... then Enter)\n: "
-            command = Game.read_choice_set_int(command_txt, {1, 2, 3, 4})
+            command = Game.read_choice_set_int(command_txt, {1, 2, 3, 4, 5})
             match command:
                 case 1:
                     utils.game_clear()
                     self.play()
                 case 2:
-                    print("High Scores")
-                    scoreboard = None
-                    with open(self.user_file_path) as ur:
-                        content = ur.read()
-                        if not content:
-                            scoreboard = '' # self.empty_scoreboard
-                        else:
-                            scoreboard = json.load(ur)
-                    print(scoreboard)
+                    self.display_high_scores()
                 case 3:
-                    self.config()
+                    self.display_hall_of_fame()
                 case 4:
+                    self.config()
+                case 5:
                     break
             input("Press enter to return to the Main Menu.\n")
             utils.game_clear()
@@ -398,3 +393,204 @@ Category:\t\t{cat_name}\nDifficulty:\t\t{diff_name}\nType:\t\t\t{qtype_name}"
         usr = user.User(self.name, category_score,
                         self.score, self.quest_numb)
         usr.update_score()
+
+    @staticmethod
+    def _score_sort_key(entry: dict) -> tuple:
+        """Sort scores by correct answers, then by score denominator."""
+        return (entry["correct"], entry["total"])
+
+
+    def display_high_scores(self):
+        """Display and export the top 10 users overall and per category."""
+        try:
+            with open(self.user_file_path, encoding="utf-8") as score_file:
+                users_data = json.load(score_file)
+        except FileNotFoundError:
+            print("No saved scores yet.")
+            return
+        except (json.JSONDecodeError, OSError) as error:
+            print(f"Could not read saved scores: {error}")
+            return
+
+        if not isinstance(users_data, dict) or not users_data:
+            print("No saved scores yet.")
+            return
+
+        # Convert the stored score strings, such as "8/10", to numbers.
+        all_entries = []
+        for username, user_data in users_data.items():
+            scores = user_data.get("scores",
+                                   []) if isinstance(user_data, dict) else []
+
+            for score in scores:
+                if not isinstance(score, dict):
+                    continue
+
+                try:
+                    correct_text, total_text = str(score["score"]).split("/",
+                                                                         1)
+                    correct = int(correct_text)
+                    total = int(total_text)
+                    if total <= 0 or correct < 0:
+                        continue
+                except (KeyError, TypeError, ValueError):
+                    continue
+
+                all_entries.append({
+                    "username": str(username),
+                    "category": str(score.get("category", "Unknown")),
+                    "correct": correct,
+                    "total": total,
+                    "date": str(score.get("date", "")),
+                })
+
+        if not all_entries:
+            print("No valid saved scores found.")
+            return
+
+        categories = sorted({entry["category"] for entry in all_entries})
+
+        # “Overall” combines all categories. Each other board includes only
+        # scores saved for that category.
+        boards = [("Overall (All Categories)", all_entries)]
+        boards.extend(
+            (category, [
+                entry for entry in all_entries
+                if entry["category"] == category
+            ])
+            for category in categories)
+
+        csv_rows = []
+
+        for board_name, entries in boards:
+            # Group each user's attempts, then select their best attempt.
+            user_entries = {}
+            for entry in entries:
+                user_entries.setdefault(entry["username"], []).append(entry)
+
+            ranked_users = []
+            for username, scores in user_entries.items():
+                ordered_scores = sorted(
+                    scores,
+                    key=self._score_sort_key,
+                    reverse=True)
+                ranked_users.append((username, ordered_scores))
+
+            ranked_users.sort(
+                key=lambda item: (
+                    -item[1][0]["correct"],
+                    item[0].casefold()))
+            ranked_users = ranked_users[:10]
+
+            print(f"\n=== {board_name} High Scores ===")
+            if not ranked_users:
+                print("No scores for this category.")
+                continue
+
+            for rank, (username, scores) in enumerate(ranked_users, start=1):
+                best_score = scores[0]
+                history = scores[:5]
+                history_text = ", ".join(
+                    f'{score["correct"]}/{score["total"]}'
+                    for score in history)
+
+                print(
+                    f"{rank}. {username} — "
+                    f'{best_score["correct"]}/{best_score["total"]} '
+                    f"(best; top scores: {history_text})")
+
+                csv_rows.append({
+                    "category": board_name,
+                    "rank": rank,
+                    "username": username,
+                    "best_score": (
+                        f'{best_score["correct"]}/{best_score["total"]}'),
+                    "top_scores": history_text})
+
+            input("\nPress Enter to continue to the next leaderboard...")
+
+        try:
+            with open(self.user_score_board,
+                      "w", newline="", encoding="utf-8") as csv_file:
+                fieldnames = [
+                    "category",
+                    "rank",
+                    "username",
+                    "best_score",
+                    "top_scores",
+                ]
+                writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(csv_rows)
+
+            print(f"\nLeaderboard saved to {self.user_score_board}")
+        except OSError as error:
+            print(f"Could not save the leaderboard CSV: {error}")
+
+    def display_hall_of_fame(self):
+        """Display saved user score data, ordered by username."""
+        try:
+            with open(self.user_file_path, encoding="utf-8") as user_file:
+                users_data = json.load(user_file)
+        except FileNotFoundError:
+            print("No Hall of Fame data found yet.")
+            return
+        except json.JSONDecodeError:
+            print("The Hall of Fame file is empty or contains invalid JSON.")
+            return
+        except OSError as error:
+            print(f"Could not read the Hall of Fame file: {error}")
+            return
+
+        if not isinstance(users_data, dict) or not users_data:
+            print("The Hall of Fame is empty.")
+            return
+
+        print("\n_____---------'   HALL OF FAME   '---------_____\n")
+
+        for username in sorted(users_data, key=str.casefold):
+            user_data = users_data[username]
+            scores = user_data.get("scores",
+                                   []) if isinstance(user_data, dict) else []
+
+            print(f"Player:\n{username}")
+            print("-" * (len(username) or 1))
+
+            if not scores:
+                print("  No saved scores.\n")
+                continue
+
+            # Group this user's scores by category
+            scores_by_category = {}
+            for score in scores:
+                if isinstance(score, dict):
+                    category = score.get("category", "Unknown")
+                    scores_by_category.setdefault(category, []).append(score)
+
+            for category in sorted(scores_by_category, key=str.casefold):
+                print(f"\n  {category}")
+
+                for score in scores_by_category[category]:
+                    percent = score.get("score%", "Unknown")
+                    if isinstance(percent, (int, float)):
+                        # Stored percentages are fractions.
+                        percent = percent * 100 if percent <= 1 else percent
+                        percent = f"{percent:.2f}%"
+
+                    print(f"    Score Percent:       \
+{percent}")
+                    print(f"    Actual Score:        \
+{score.get('score', 'Unknown')}")
+                    print(f"    Questions Answered:  \
+{score.get('#quest', 'Unknown')}")
+                    print(f"    Date:                \
+{score.get('date', 'Unknown')}")
+
+                    # Show any additional score fields.
+                    displayed_fields = {
+                        "category", "score%", "score", "#quest", "date"
+                    }
+                    for field, value in score.items():
+                        if field not in displayed_fields:
+                            print(f"    {field}: {value}")
+                    print()

@@ -19,6 +19,8 @@ def main() -> None:
     try:
         game = Game()
         game.start()
+    except EOFError:
+        print("=Exiting as EOF=")
     except Exception as error:
         print(error)
 
